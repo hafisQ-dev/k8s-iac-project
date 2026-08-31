@@ -1,0 +1,3 @@
+Amazon Elastic Compute Cloud(User Guide):>Documentation>Amazon EC2>User Guide>Create a key pair for your Amazon EC2 instanceas
+HashicorpDeveloper>Terraform>Documentation>Configuration Language>Variables>Use Variable (for variables.tf)
+varables.tf: 1>aws_region2>instance_type3>key_name4>node_count
