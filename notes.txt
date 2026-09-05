@@ -1,3 +1,29 @@
 Amazon Elastic Compute Cloud(User Guide):>Documentation>Amazon EC2>User Guide>Create a key pair for your Amazon EC2 instanceas
 HashicorpDeveloper>Terraform>Documentation>Configuration Language>Variables>Use Variable (for variables.tf)
 varables.tf: 1>aws_region2>instance_type3>key_name4>node_count
+forexample: variable "degisken_adi" {
+  type        = string
+  default     = "varsayilan_deger"
+  description = "Ne ise yaradigi"
+}
+Terraform Registry:>
+structure of main terraform file: 1.Provider(aws_provider and aws_region); 2.Virtual Network Layer(VPC(virtual private cloud),subnet,internet gateway,route table and route table assoc.) 3.Security Group(ssh and ingress and egress ports) 4.Server and Connections(AMI and EC2 Instances)
+AWS Structure: 
+[ AWS BULUT (eu-west-2) ]
+ └── VPC (10.0.0.0/16) - Sana özel izole sanal veri merkezi  ###(cidr:Classless Inter-Domain Routing)
+      ├── Internet Gateway - Sanal veri merkezinin internet vanası
+      └── Subnet (10.0.0.0/24) - Sunucuların dizileceği mahal/blok
+           ├── Security Group - Sunucuların önündeki firewall (Kapı Portları)
+           ├── EC2: Master Node (k8s-master) - Kontrol düzlemi
+           ├── EC2: Worker Node 1 (k8s-worker-1) - İş yükü sunucusu
+           └── EC2: Worker Node 2 (k8s-worker-2) - İş yükü sunucusu
+source types: resources(0'dan kaynak oluşturma(server,vpc,firewall rules et.)); data sources(var olana sorgu atma(aws_ami-ubnutu imajı çekme));list resource.
+terraform.tfvars structure >>>> db_password = "SuperSecretPassword123!"
+Meta-Argument: count, for_each, depends_on, provider, lifecycle  (terraform hashicorp )
+Özet: Parametre Seçim Mantığı
+1.İşletim Sistemi Ne Olacak? -> ami
+2.Donanım Ne Olacak? -> instance_type
+3.Nerede/Hangi Ağda Çalışacak? -> subnet_id
+4.Hangi Güvenlik Duvarı Koruyacak? -> vpc_security_group_id
+5.İçine Nasıl Bağlanacağım? -> key_name
+6.Kaç Tane Açılacak? -> count
