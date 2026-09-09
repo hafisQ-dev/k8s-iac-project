@@ -27,3 +27,6 @@ Meta-Argument: count, for_each, depends_on, provider, lifecycle  (terraform hash
 4.Hangi Güvenlik Duvarı Koruyacak? -> vpc_security_group_id
 5.İçine Nasıl Bağlanacağım? -> key_name
 6.Kaç Tane Açılacak? -> count
+***## ANSIBLE ##***
+ansible configuration file:> ansible-config init --disabled > ansible.cfg.example (example file)
+[defaults]: inventory= inventory.ini (you have hosts in you main file path) ; remote_user= ubuntu (U are using (ami); host_key_checking=False (y/N)  (they are necessary changing features)
