@@ -1,5 +1,5 @@
-Amazon Elastic Compute Cloud(User Guide):>Documentation>Amazon EC2>User Guide>Create a key pair for your Amazon EC2 instanceas
-HashicorpDeveloper>Terraform>Documentation>Configuration Language>Variables>Use Variable (for variables.tf)
+* Amazon Elastic Compute Cloud(User Guide):>Documentation>Amazon EC2>User Guide>Create a key pair for your Amazon EC2 instanceas
+* HashicorpDeveloper>Terraform>Documentation>Configuration Language>Variables>Use Variable (for variables.tf)
 varables.tf: 1>aws_region2>instance_type3>key_name4>node_count
 forexample: variable "degisken_adi" {
   type        = string
@@ -28,5 +28,18 @@ Meta-Argument: count, for_each, depends_on, provider, lifecycle  (terraform hash
 5.İçine Nasıl Bağlanacağım? -> key_name
 6.Kaç Tane Açılacak? -> count
 ***## ANSIBLE ##***
-ansible configuration file:> ansible-config init --disabled > ansible.cfg.example (example file)
+DOCS:
+* Ansible Community Documentation > Ansible Configuration Settings
+ansible configuration file:> ansible-config init --disabled > ansible.cfg.example (example file)  ($~ansible-config view)
 [defaults]: inventory= inventory.ini (you have hosts in you main file path) ; remote_user= ubuntu (U are using (ami); host_key_checking=False (y/N)  (they are necessary changing features)
+ansible.cfg: >>> 1.Where is my inventory list;2.Which users and keys will I use to connect Inventory;3. Will we being asked SSH confirming(y/N); 4.How tod sudo (authority) operations: [privilege_escalation] > become = True | become_method = sudo | become_user = root | become_ask_pass = False  |
+ansible inventory file: > 
+[group_name]
+server_name ansible_host=<IP adres(you can get from terraform outputs>
+[group_cluster:children]
+server names
+[group_cluster:vars]
+ansible_user=ubuntu or another server name
+ansible_ssh_private_key_file=
+ansible_python_interpreter=
+$~ansible all -m ping (for confirming ssh comnections and authority for all servers)
