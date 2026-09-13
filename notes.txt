@@ -43,3 +43,11 @@ ansible_user=ubuntu or another server name
 ansible_ssh_private_key_file=
 ansible_python_interpreter=
 $~ansible all -m ping (for confirming ssh comnections and authority for all servers)
+##** Ansible Playbook **##
+# swap(takas alanı) operations: fallocate ➔ chmod ➔ mkswap ➔ swapon ➔ fstab edition.
+1.Creating empty file on disk: fallocate -l 2G /swapfile
+2.Root authority for swap file: sudo chmod 600 /swapfile  
+   read=4,write=2,execution=1, nothing=0.   user>group>other (0600) owner=6(r+w), group and other = 0(nothing)
+   example with symbolic number >>> # Sahibe çalıştırma izni ekle : chmod u+x betik.sh
+3.Returning file to swap form: sudo mkswap /swapfile
+4.Activate swap field: swapon /swapfile
