@@ -51,3 +51,5 @@ $~ansible all -m ping (for confirming ssh comnections and authority for all serv
    example with symbolic number >>> # Sahibe çalıştırma izni ekle : chmod u+x betik.sh
 3.Returning file to swap form: sudo mkswap /swapfile
 4.Activate swap field: swapon /swapfile
+5.Altering swap file permanently to /etcd/fstab:  /swapfile none swap sw 0 0 (src,path, filesystem type, swap options (as sw,ntfs.xsf),state)
+# Kubernetes Kernel Models
