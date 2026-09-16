@@ -52,4 +52,23 @@ $~ansible all -m ping (for confirming ssh comnections and authority for all serv
 3.Returning file to swap form: sudo mkswap /swapfile
 4.Activate swap field: swapon /swapfile
 5.Altering swap file permanently to /etcd/fstab:  /swapfile none swap sw 0 0 (src,path, filesystem type, swap options (as sw,ntfs.xsf),state)
-# Kubernetes Kernel Models
+# Kubernetes Kernel Modules:
+  1. overlay: Linux Kernel'ının katmanlı dosya sistemi (OverlayFS) sürücüsüdür. ($~sudo modprobe overlay)
+  2. br_netfilter: Linux köprü (Bridge) ağından geçen paketlerin, işletim sisteminin iptables güvenlik duvarı ve paket yönlendirme kuralları tarafından taranmasını sağlayan sürücüdür.($~sudo modprobe br_netfilter)  [Yapılmazsa >>> CNI (Calico/Flannel) eklentileri ağ tüneli oluşturamaz ve Pod'lara IP dağıtamazdı.]
+*changed_when: false (Ansible İdempotency İnce Ayarı)
+# IP forwarding by sysctl
+  net.ipv4.ip_forward = 1  (Router)  IP forwarding izni  [Yapılmasza >>> Node-1'deki Pod, Node-2'deki Pod'a veri gönderemezdi. Ağ paketleri sunucu sınırında takılırdı.]
+  net.bridge.bridge-nf-call-iptables = 1  [Yapılmazsa>>> Kube-Proxy ve Kubernetes Service yönlendirmeleri çalışmazdı. Servis IP'lerine atılan istekler hedefe ulaşmazdı.]
+  net.bridge.bridge-nf-call-ip6tables = 1  (iptables veya IPVS kurallarını kullana bilmesi için)
+General Network basics.
+IPv4 (Internet Protocol Version 4):  192.168.1.50
+IPv6 (Internet Protocol Version 6):  2001:0db8:85a3:0000:0000:8a2e:0370:7334
+IP Forwarding: kendisine gelen bir ağ paketini, kendi üzerinde tutmayıp başka bir cihaza veya ağ arayüzüne (interface) aktarması işlemidir.
+Network Bridge (Ağ Köprüsü/Sanal Anahtar / Switch) ve IPTables (Linux Güvenlik Duvarı & Trafik Yonlendiricisi)
+
+
+
+------Troubleshooting------
+
+
+
