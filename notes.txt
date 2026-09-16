@@ -65,9 +65,23 @@ IPv4 (Internet Protocol Version 4):  192.168.1.50
 IPv6 (Internet Protocol Version 6):  2001:0db8:85a3:0000:0000:8a2e:0370:7334
 IP Forwarding: kendisine gelen bir ağ paketini, kendi üzerinde tutmayıp başka bir cihaza veya ağ arayüzüne (interface) aktarması işlemidir.
 Network Bridge (Ağ Köprüsü/Sanal Anahtar / Switch) ve IPTables (Linux Güvenlik Duvarı & Trafik Yonlendiricisi)
-
-
-
+# Kubernetes basic tools and Container Runtime 
+1. APT dependencies and REPO Preparation 
+2. MKDIR keyrings folder
+3. Installing GPG key of Docker/Containerd
+4. Adding APT repo to the system
+5. Installing GPG key of Kobernetes
+6. Adding APT repo to the system
+-------------------------------------------------------
+7.  Downloading containerd packets
+8.  Creating containerd config folder
+9.  And prodact containerd configuration and activate systemCgroup setting
+10. Inıtialization and Do enable containerd service
+------------------------------------------------------
+11. Downloading kebernetes packets
+12. Stop automatic update of Kubernetes packets
+13. Do enable kubelet service
+------------------------------------------------------
 ------Troubleshooting------
 
 
