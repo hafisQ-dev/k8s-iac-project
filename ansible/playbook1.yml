@@ -1,0 +1,154 @@
+---
+- name: AWS Free Tier Kubernetes Node Hazırlık Şablonu
+  hosts: k8s_cluster
+  become: true
+  tasks:
+
+    # --- 1. ADIM: AWS Free Tier İçin Swap Dosyası (2GB) ---
+    - name: 2GB Swap dosyası oluştur (Free Tier kilitlenmelerini önlemek için)
+      ansible.builtin.command: fallocate -l 2G /swapfile
+      args:
+        creates: /swapfile
+
+    - name: Swap dosyası izinlerini sadece root yap
+      ansible.builtin.file:
+        path: /swapfile
+        mode: '0600'
+
+    - name: Dosyayı swap alanına çevir
+      ansible.builtin.command: mkswap /swapfile
+      register: mkswap_result
+      changed_when: mkswap_result.rc == 0
+      failed_when: false
+
+    - name: Swap alanını aktif et
+      ansible.builtin.command: swapon /swapfile
+      register: swapon_result
+      changed_when: swapon_result.rc == 0
+      failed_when: false
+
+    - name: Swap alanını /etc/fstab dosyasına kalıcı ekle
+      ansible.builtin.mount:
+        path: none
+        src: /swapfile
+        fstype: swap
+        opts: sw
+        state: present
+
+    # --- 2. ADIM: Kubernetes Kernel Modülleri ---
+    - name: Kernel modül konfigürasyon dosyasını oluştur
+      ansible.builtin.copy:
+        dest: /etc/modules-load.d/k8s.conf
+        content: |
+          overlay
+          br_netfilter
+        mode: '0644'
+
+    - name: Kernel modüllerini yükle
+      ansible.builtin.command: "modprobe {{ item }}"
+      loop:
+        - overlay
+        - br_netfilter
+      changed_when: false
+
+    # --- 3. ADIM: Sysctl Ağ Ayarları (IP Forwarding & Bridge) ---
+    - name: Kubernetes sysctl konfigürasyon dosyasını oluştur
+      ansible.builtin.copy:
+        dest: /etc/sysctl.d/k8s.conf
+        content: |
+          net.bridge.bridge-nf-call-iptables  = 1
+          net.bridge.bridge-nf-call-ip6tables = 1
+          net.ipv4.ip_forward                 = 1
+        mode: '0644'
+
+    - name: Sysctl parametrelerini canlı sisteme uygula
+      ansible.builtin.command: sysctl --system
+      changed_when: false
+
+# --- 4. ADIM: APT Bağımlılıkları ve Repoların Hazırlanması ---
+    - name: Temel APT paketlerini ve bağımlılıkları yükle
+      ansible.builtin.apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gpg
+          - software-properties-common
+        state: present
+        update_cache: true
+
+    - name: Keyrings klasörünü oluştur
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Docker/Containerd GPG anahtarını indir
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: '0644'
+
+    - name: Docker APT deposunu sisteme ekle
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+
+    - name: Kubernetes GPG anahtarını indir
+      ansible.builtin.get_url:
+        url: https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key
+        dest: /etc/apt/keyrings/kubernetes-apt-keyring.asc
+        mode: '0644'
+
+    - name: Kubernetes APT deposunu sisteme ekle
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.asc] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /"
+        state: present
+
+    # --- 5. ADIM: containerd Kurulumu ve Cgroup Yapılandırması ---
+    - name: containerd paketini yükle
+      ansible.builtin.apt:
+        name: containerd.io
+        state: present
+        update_cache: true
+
+    - name: containerd konfigürasyon klasörünü oluştur
+      ansible.builtin.file:
+        path: /etc/containerd
+        state: directory
+        mode: '0755'
+
+    - name: containerd konfigürasyonunu üret ve SystemdCgroup ayarını aktifleştir
+      ansible.builtin.shell: |
+        containerd config default | sed 's/SystemdCgroup = false/SystemdCgroup = true/g' > /etc/containerd/config.toml
+      notify: Restart containerd
+
+    - name: containerd servisini başlat ve enable et
+      ansible.builtin.systemd:
+        name: containerd
+        state: started
+        enabled: true
+
+    # --- 6. ADIM: K8s Araçlarının (kubelet, kubeadm, kubectl) Kurulumu ---
+    - name: Kubernetes paketlerini yükle
+      ansible.builtin.apt:
+        name:
+          - kubelet
+          - kubeadm
+          - kubectl
+        state: present
+        update_cache: true
+
+    - name: K8s paketlerinin otomatik güncellenmesini engelle (apt-mark hold)
+      ansible.builtin.dpkg_selections:
+        name: "{{ item }}"
+        selection: hold
+      loop:
+        - kubelet
+        - kubeadm
+        - kubectl
+
+    - name: kubelet servisini enable et
+      ansible.builtin.systemd:
+        name: kubelet
+        enabled: true
