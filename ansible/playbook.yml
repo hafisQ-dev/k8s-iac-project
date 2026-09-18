@@ -161,3 +161,26 @@
         name: kubelet
         state: started
         enabled: true
+
+     # Task 3 Initialization control plane (master) node
+    - name: kubeadm init
+      ansible.builtin.shell: |
+        kubeadm init \
+          --pod-network-cidr = 10.244.0.0/16 \
+          --cri-socket = unix:///var/run/containerd/containerd.sock
+      args:
+        creates: /etc/kubernetes/admin.conf
+      register: kube_init_outputs
+
+    - name: creating .kube folder
+      ansible.builtin.file:
+        path: /root/.kube
+        mode: '0700'
+        state: directory
+
+    - name: copy admin.conf file from /etc/kubernetes/admin.conf to /root/.kube/config
+      ansible.builtin.copy:
+        src: /etc/kubernetes/admin.conf
+        dest: /root/.kube/config
+        remote_src: true
+        mode: '0600'
