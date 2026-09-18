@@ -113,7 +113,7 @@
         suites: /
         signed_by: /etc/apt/keyrings/kubernetes-apt-keyring.asc
         state: present
-      # Stage 2.2 Containerd and cgroup configuration and installing
+      # Task 2.2 Containerd and cgroup configuration and installing
     - name: Install containerd.io package
       ansible.builtin.apt:
         name: containerd.io
@@ -137,3 +137,27 @@
         state: started
         enabled: true
 
+      # Task 2.3 Kubernetes tools setup (kubelet,kubeadm,kubectl)
+    - name: Install Kubernetes package
+      ansible.builtin.apt:
+        name:
+          - kubeadm
+          - kubectl
+          - kubelet
+        state: present
+        update_cache: true
+
+    - name: apt-mark selection
+      ansible.builtin.dpkg_selection:
+        name: "{{ item }}"
+        selection: hold
+      loop:
+        - kubeadm
+        - kubectl
+        - kubelet
+
+    - name: Start and enable kubelet service
+      ansible.builtin.systemd_service:
+        name: kubelet
+        state: started
+        enabled: true
