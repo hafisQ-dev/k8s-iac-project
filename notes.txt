@@ -82,8 +82,12 @@ I got this information from terraform main.tf doc (server architecture == amd64,
 -------------------------------------------------------
 # Getting started to containerd
 7.  Downloading containerd packets
+package name: containerd.io (from source: install docker engine on ubuntu)
 8.  Creating containerd config folder
+folder name: containerd, mode: 0755)
 9.  And prodact containerd configuration and activate systemCgroup setting
+"I thought the best modul for using would be command module.But the most suitable module is shell module.Because command module can not use shell symboll as pipeline(|),> or <" Therefore.we use ansible.builtin.shell module for this task.We must use creates parameter(under args key task) following shell module because shell module causes idempotancy breaking problem.
+*The default configuration can be generated via containerd config default > /etc/containerd/config.toml. [getting started with containerd from github repo under the title of Customizing containerd]. We must change from SysteCgroup=false to SystemCgroup=true [Configuring the systemd cgroup driver under Container Runtimes]
 10. Inıtialization and Do enable containerd service
 ------------------------------------------------------
 11. Downloading kebernetes packets
