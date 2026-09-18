@@ -126,4 +126,14 @@
         mode: '0755'
         state: directory
 
-    - name: 
+    - name: Producting containerd configuration and activating SystemdCgroup setting
+      ansible.builtin.shell: |
+        containerd config defeult | sed 's/SystemdCgroup = false/SystemdCgroup = true/g' > /etc/containerd/config.toml
+      notify: Restart containerd
+
+    - name: Initialization containerd and doing enable
+      ansible.builtin.systemd_service:
+        name: containerd
+        state: started
+        enabled: true
+
