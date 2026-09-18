@@ -147,6 +147,11 @@
         - kubelet
         - kubeadm
         - kubectl
+        
+    - name: kubelet servisini enable et
+      ansible.builtin.systemd:
+        name: kubelet
+        enabled: true
 
 # --- 7. ADIM: Control Plane (kubeadm init) Başlatma ---
     - name: Kubernetes Control Plane düğümünü başlat (kubeadm init)
@@ -170,8 +175,3 @@
         dest: /root/.kube/config
         remote_src: true
         mode: '0600'
-
-    - name: kubelet servisini enable et
-      ansible.builtin.systemd:
-        name: kubelet
-        enabled: true
