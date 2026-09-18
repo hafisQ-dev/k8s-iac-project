@@ -92,6 +92,7 @@ folder name: containerd, mode: 0755)
 10. Start and enable containerd service
 ansible.builtin.systemd_service (instead of ansible.builtin.systemd)
 ------------------------------------------------------
+Kubernetes Documentation > Installing kubeadm 
 11. Downloading kubernetes packets
 12. Stop automatic update of Kubernetes packets
 13. start and enable kubelet service
