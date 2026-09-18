@@ -94,9 +94,18 @@ ansible.builtin.systemd_service (instead of ansible.builtin.systemd)
 ------------------------------------------------------
 Kubernetes Documentation > Installing kubeadm 
 11. Downloading kubernetes packets
-12. Stop automatic update of Kubernetes packets
+12. Stop automatic update of Kubernetes packets (apt-mark>>>dpkg_selection>hold)
 13. start and enable kubelet service
 ------------------------------------------------------
+# Initializing your control-plane node (under Creating a cluster with kubeadm)
+1.Initialization control-plane (master) node
+kubeadm init <args> (--pod-network-cidr[Installing a Pod network add-on] & --cri-socket[Installing a container runtime]) 
+args: creates parametresi shell ve command gibi modüllerin tekrarlanabilirlik özelliyine kör olma sebebinden kullanılıyor.
+kube_init_outpust :  we will need get token and other necessary information for worker nodes joining . we register them.
+2 & 3 >>>>> mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+.kube (mode=0700);config(mode=0600)
 ------Troubleshooting------
 
 
