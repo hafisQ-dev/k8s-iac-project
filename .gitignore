@@ -1,6 +1,7 @@
 # Created by https://www.toptal.com/developers/gitignore/api/terraform,ansible,python,linux,git
 # Edit at https://www.toptal.com/developers/gitignore?templates=terraform,ansible,python,linux,git
-
+*.save
+*.example
 ### Ansible ###
 *.retry
 
