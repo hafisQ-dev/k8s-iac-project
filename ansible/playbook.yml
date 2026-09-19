@@ -3,6 +3,7 @@
   hosts: k8s_cluster
   become: true
   tasks:
+
       # --- Stage 1 --- Kubernetses System Preparetion
       # Task 1.1: Swap file for AWS free tier
     - name: Swap-on file creating for kubernetese
@@ -45,7 +46,7 @@
         mode: '0644'
 
     - name: Adding kernel modules to linux kernel
-      ansible.builtin.command: "modprobe {{ items }}"
+      ansible.builtin.command: "modprobe {{ item }}"
       loop:
         - overlay
         - br_netfilter
@@ -93,7 +94,7 @@
         name: docker
         types: deb
         uris: https://download.docker.com/linux/ubuntu
-        suites: "{{ ansible_distribution_release }}"
+        suites: "{{ ansible_facts['distribution_release'] }}"
         components: stable
         architectures: amd64
         signed_by: /etc/apt/keyrings/docker.asc
@@ -148,7 +149,7 @@
         update_cache: true
 
     - name: apt-mark selection
-      ansible.builtin.dpkg_selection:
+      ansible.builtin.dpkg_selections:
         name: "{{ item }}"
         selection: hold
       loop:
@@ -184,3 +185,23 @@
         dest: /root/.kube/config
         remote_src: true
         mode: '0600'
+    # Task 4. CNI Network Add-on
+    - name: Calico custom resource definition and tigera operator install
+      ansible.builtin.command: >
+        kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/tigera-operator.yaml
+      environment: /root/.kube/config
+      register: operator_results
+      failed_when:
+        - operator_results != 0
+        - "'already exists' not in operator_results.stderr"
+      changed_when: "'created' in operator_results.stdout or 'configures' in _results.stdout"
+
+    - name: Calico Custom Resource (Network Structure)
+      ansible.builtin.command: >
+        kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/custom-resources.yaml
+      environment: /root/.kube/config
+      register: cni_results
+      failed_when:
+        - cni_results != 0
+        - "'already exists' not in cni_results.stderr"
+      changed_when: "'created' in cni_results.stdout or 'configures' in cni_results.stdout"
