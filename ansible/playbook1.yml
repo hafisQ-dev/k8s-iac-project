@@ -175,3 +175,11 @@
         dest: /root/.kube/config
         remote_src: true
         mode: '0600'
+# --- 7. ADIM: CNI (Calico Ağ Eklentisi) Kurulumu ---
+    - name: Calico CNI manifest dosyasını indir ve kümeye uygula
+      ansible.builtin.command: >
+        kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/calico.yaml
+      environment:
+        KUBECONFIG: /root/.kube/config
+      register: cni_result
+      changed_when: "'created' in cni_result.stdout or 'configured' in cni_result.stdout"
