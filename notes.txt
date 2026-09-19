@@ -97,19 +97,21 @@ Kubernetes Documentation > Installing kubeadm
 12. Stop automatic update of Kubernetes packets (apt-mark>>>dpkg_selection>hold)
 13. start and enable kubelet service
 ------------------------------------------------------
-# Initializing your control-plane node (under Creating a cluster with kubeadm)
+# Initializing your control-plane node (under Creating a cluster with kubeadm) 
 1.Initialization control-plane (master) node
 kubeadm init <args> (--pod-network-cidr[Installing a Pod network add-on] & --cri-socket[Installing a container runtime]) 
 args: creates parametresi shell ve command gibi modüllerin tekrarlanabilirlik özelliyine kör olma sebebinden kullanılıyor.
 kube_init_outpust :  we will need get token and other necessary information for worker nodes joining . we register them.
-2 & 3 >>>>> mkdir -p $HOME/.kube
+2 & 3 KubeConfig Infrastructure 
+mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 .kube (mode=0700);config(mode=0600)
 ------------------------------------------------------
-# KubeConfig Infrastructure
-Kubernetes Documentation > Getting started > Production environment > Installing Kubernetes with deployment tools > Bootstrapping clusters with kubeadm > Creating a cluster with kubeadm >>>>>>>>>>>>>>>>>>> Installing a Pod network add-on
-
+# CNI(Container Network Interface) Network Add-on
+1*Kubernetes Documentation > Getting started > Production environment > Installing Kubernetes with deployment tools > Bootstrapping clusters with kubeadm > Creating a cluster with kubeadm >>>>>>>>>>>>>>>>>>> Installing a Pod network add-on
+2*Kubernetes Documentation > Concepts > Configuration > Organizing Cluster Access Using kubeconfig Files>>>>The KUBECONFIG environment variable
+[Use kubeconfig files to organize information about clusters, users, namespaces, and authentication mechanisms. The kubectl command-line tool uses kubeconfig files to find the information it needs to choose a cluster and communicate with the API server of a cluster.]
 
 ------Troubleshooting------
 
