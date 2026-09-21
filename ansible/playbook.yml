@@ -163,6 +163,10 @@
         state: started
         enabled: true
 
+- name: Initialization of Control Plane
+  hosts: master
+  became: true
+  tasks:
      # Task 3 Initialization control plane (master) node
     - name: kubeadm init
       ansible.builtin.shell: |
@@ -205,3 +209,8 @@
         - cni_results != 0
         - "'already exists' not in cni_results.stderr"
       changed_when: "'created' in cni_results.stdout or 'configures' in cni_results.stdout"
+
+- name: 
+  hosts: master
+  became: true
+  tasks:
