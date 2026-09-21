@@ -115,6 +115,18 @@ KUBECONFIG=/etc/kubernetes/admin.conf
 2*Kubernetes Documentation > Concepts > Configuration > Organizing Cluster Access Using kubeconfig Files>>>>The KUBECONFIG environment variable
 [Use kubeconfig files to organize information about clusters, users, namespaces, and authentication mechanisms. The kubectl command-line tool uses kubeconfig files to find the information it needs to choose a cluster and communicate with the API server of a cluster.]
 Calico quickstart guide>Step 2. Install Calico
+-----------------------------------------------------
+Handlers...Ansible'da normal görevler (tasks) sırayla her çalıştırıldığında yürütülür. handlers ise sadece ve sadece kendisine bir bildirim (notify) geldiğinde tetiklenen özel görevlerdir.Çalışma Senaryoları:
+1. Dosya Değiştiğinde (changed): Ansible config.toml dosyasının değiştiğini tespit eder. notify: Restart containerd uyarısını hafızaya alır. Playbook'un tüm tasks bölümü bittikten sonra containerd servisini bir kez yeniden başlatır.
+2. Dosya Değişmediğinde (ok): Dosya zaten güncelse Ansible müdahale etmez. notify tetiklenmez ve containerd servisi hiç yeniden başlatılmaz (kesinti yaşanmaz).
+Structure: 
+handlers:
+- name: Restart containerd
+  ansible.builtin.service:
+    name: containerd
+    state: restarted
+-----------------------------------------------------
+
 ------Troubleshooting------
 
 
