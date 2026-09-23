@@ -153,6 +153,10 @@
         name: kubelet
         enabled: true
 
+- name: Initialization of Control Plane
+  hosts: master
+  became: true
+  tasks:
 # --- 7. ADIM: Control Plane (kubeadm init) Başlatma ---
     - name: Kubernetes Control Plane düğümünü başlat (kubeadm init)
       ansible.builtin.shell: |
@@ -175,11 +179,76 @@
         dest: /root/.kube/config
         remote_src: true
         mode: '0600'
-# --- 7. ADIM: CNI (Calico Ağ Eklentisi) Kurulumu ---
-    - name: Calico CNI manifest dosyasını indir ve kümeye uygula
+# --- 8. ADIM: CNI Network Add-on
+    - name: Calico custom resource definition and tigera operator install
       ansible.builtin.command: >
-        kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/calico.yaml
-      environment:
-        KUBECONFIG: /root/.kube/config
-      register: cni_result
-      changed_when: "'created' in cni_result.stdout or 'configured' in cni_result.stdout"
+        kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/tigera-operator.yaml
+      environment: /root/.kube/config
+      register: operator_results
+      failed_when:
+        - operator_results != 0
+        - "'already exists' not in operator_results.stderr"
+      changed_when: "'created' in operator_results.stdout or 'configures' in _results.stdout"
+
+    - name: Calico Custom Resource (Network Structure)
+      ansible.builtin.command: >
+        kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/custom-resources.yaml
+      environment: /root/.kube/config
+      register: cni_results
+      failed_when:
+        - cni_results != 0
+        - "'already exists' not in cni_results.stderr"
+      changed_when: "'created' in cni_results.stdout or 'configures' in cni_results.stdout"
+
+# ==============================================================================
+# PLAY 3: MASTER ÜZERİNDE TAZE JOIN KOMUTU ÜRETME
+# (Resmi K8s Mantığı: Token ve Sertifika Hash'ini dinamik almak için)
+# ==============================================================================
+- name: Master Düğümde Join Komutunu Oluştur
+  hosts: master
+  become: true
+  tasks:
+    - name: Taze join komutunu al
+      ansible.builtin.command: kubeadm token create --print-join-command
+      register: join_command_raw
+      changed_when: false
+
+    - name: Join komutunu Ansible hafızasına (fact) kaydet
+      ansible.builtin.set_fact:
+        join_command: "{{ join_command_raw.stdout }}"
+
+# ==============================================================================
+# PLAY 4: WORKER DÜĞÜMLERİ KÜMEYE BAĞLAMA
+# (Resmi K8s Mantığı: Worker'ları 'kubeadm join' ile Master'a bağlamak)
+# ==============================================================================
+- name: Worker Düğümleri Kubernetes Kümesine Kat
+  hosts: workers
+  become: true
+  tasks:
+    - name: Worker node'u kümeye bağla (kubeadm join)
+      ansible.builtin.shell: "{{ hostvars[groups['master'][0]]['join_command'] }}"
+      args:
+        creates: /etc/kubernetes/kubelet.conf
+      register: worker_join_result
+
+    - name: Join işleminin sonucunu doğrula
+      ansible.builtin.debug:
+        msg: "Worker düğüm başarıyla katıldı veya zaten kümedeydi."
+      when: worker_join_result is not skipped
+
+# ==============================================================================
+# PLAY 5: KÜME DURUMUNU MASTER ÜZERİNDEN DOĞRULAMA
+# (Resmi K8s Mantığı: Node'ların Ready durumuna geçtiğini teyit etmek)
+# ==============================================================================
+- name: Küme Düğüm Durumlarını Kontrol Et
+  hosts: master
+  become: true
+  tasks:
+    - name: Node listesini al
+      ansible.builtin.command: kubectl get nodes --kubeconfig=/etc/kubernetes/admin.conf
+      register: nodes_status
+      changed_when: false
+
+    - name: Düğüm durumlarını konsola yazdır
+      ansible.builtin.debug:
+        var: nodes_status.stdout_lines
