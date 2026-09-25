@@ -126,7 +126,10 @@ handlers:
     name: containerd
     state: restarted
 -----------------------------------------------------
-
+# Creating Join Command on the Master Node
+We have to product updated token because current tokens expire in 24 hours. We will make join command on master node before we use on worker nodes.
+Docs:Creating a cluster with kubeadm > Adding Linux worker nodes
+Docs:
 ------Troubleshooting------
 
 
