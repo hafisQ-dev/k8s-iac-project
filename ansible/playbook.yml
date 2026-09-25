@@ -165,7 +165,7 @@
 
 - name: Initialization of Control Plane
   hosts: master
-  became: true
+  become: true
   tasks:
      # Task 3 Initialization control plane (master) node
     - name: kubeadm init
@@ -223,8 +223,8 @@
 
     # Task 6  Adding Linux worker node 
 - name: worker node operations
-  hosts: worker
-  became: true
+  hosts: workers
+  become: true
   tasks:
 
     - name: Making to add Worker node to The Cluster
