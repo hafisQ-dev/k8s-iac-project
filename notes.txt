@@ -110,7 +110,7 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ------------------------------------------------------
 # CNI(Container Network Interface) Network Add-on
 1*Kubernetes Documentation > Getting started > Production environment > Installing Kubernetes with deployment tools > Bootstrapping clusters with kubeadm > Creating a cluster with kubeadm >>>>>>>>>>>>>>>>>>> Installing a Pod network add-on    
-KUBECONFIG=/etc/kubernetes/admin.conf
+KUBECONFIG=/etc/kubernetes/admin.conf  (admin.conf file has created when kubeadm init worked)
 
 2*Kubernetes Documentation > Concepts > Configuration > Organizing Cluster Access Using kubeconfig Files>>>>The KUBECONFIG environment variable
 [Use kubeconfig files to organize information about clusters, users, namespaces, and authentication mechanisms. The kubectl command-line tool uses kubeconfig files to find the information it needs to choose a cluster and communicate with the API server of a cluster.]
@@ -129,7 +129,22 @@ handlers:
 # Creating Join Command on the Master Node
 We have to product updated token because current tokens expire in 24 hours. We will make join command on master node before we use on worker nodes.
 Docs:Creating a cluster with kubeadm > Adding Linux worker nodes
-Docs:
+This command need to us for joining to master node as a worker node. Therefore we use this commmand (sudo kubeadm token create --print-join-command) to product this command(sudo kubeadm join --token <token> <control-plane-host>:<control-plane-port> --discovery-token-ca-cert-hash sha256:<hash>). The first command produces a joining command with a updated and new specification especally a token.
+We use SET_FACT module of Ansible to memorize adding linux node to master node
+>>> ansible.builtin.set_fact:
+        join_command: "{{ join_command_raw.stdout }}"
+# To Add Worker nodes to the Cluster
+Docs:Ansible Community Docs: > Special Variables (Magic Variables and Facts)
+Docs: Return Values 
+Docs: Playbook Keywords
+docs > > > > > > ****Discovering variables: facts and magic variables
+Docs: Reference > Setup tools >> Kubeadm join >>> Use of custom kubelet credentials with kubeadm join (kubelet.conf file has created when kubeadm join worked)
+hostvars>groups  or ansible_facts
+----------------------------------------------------
+# Confirming worker node added to the cluster
+Docs > Creating a cluster with kubeadm > (Optional) Controlling your cluster from machines other than the control-plane node
+kubectl --kubeconfig ./admin.conf get nodes
+*Get Node Status we use following CLI (kubectl get nodes ****) to get status of nodes to register nodes_status and make nodes_status.stdout_lines to see status of nodes (dpkg module >  var parameter) 
 ------Troubleshooting------
 
 
