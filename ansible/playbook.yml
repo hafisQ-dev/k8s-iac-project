@@ -209,3 +209,46 @@
         - cni_results != 0
         - "'already exists' not in cni_results.stderr"
       changed_when: "'created' in cni_results.stdout or 'configures' in cni_results.stdout"
+
+    # Task 5 Creating Join Command on Master node
+    - name: making a command named join_command
+      ansible.builtin.command: kubeadm token create --print-join-command
+      register: join_command_raw
+      changed_when: false
+
+    - name: register join command to ansible memory
+      ansible.builtin.set_fact:
+        join_command: "{{ join_command_raw.stdout }}"
+
+
+    # Task 6  Adding Linux worker node 
+- name: worker node operations
+  hosts: worker
+  became: true
+  tasks:
+
+    - name: Making to add Worker node to The Cluster
+      ansible.builtin.shell: "{{ hostvars[groups['master'][0]]['join_command'] }}"
+      args:
+        creates: /etc/kubernetes/kubelet.conf
+      register: worker_join_results
+
+    - name: Confirm worker node added to the cluster
+      ansible.builtin.debug:
+        msg: " Worker nodes added to the Cluster succesfully ! "
+      when: worker_join_results is not skipped
+
+     # Task 7 Notice Status of joining Worker Nodes
+- name:  Notice Status of joining Worker Nodes
+  hosts: master
+  become: true
+  tasks:
+
+    - name: Make a List for status of Nodes
+      ansible.builtin.command: kubectl --kubeconfig /etc/kubernetes/admin.conf get nodes
+      register: nodes_status
+      changed_when: false
+
+    - name: Print the status of Nodes
+      ansible.builtin.debug:
+        var: nodes_status.stdout_lines
