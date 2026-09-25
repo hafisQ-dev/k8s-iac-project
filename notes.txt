@@ -146,6 +146,6 @@ Docs > Creating a cluster with kubeadm > (Optional) Controlling your cluster fro
 kubectl --kubeconfig ./admin.conf get nodes
 *Get Node Status we use following CLI (kubectl get nodes ****) to get status of nodes to register nodes_status and make nodes_status.stdout_lines to see status of nodes (dpkg module >  var parameter) 
 ------Troubleshooting------
-
-
+I got syntax warning as one of the task keywords (become) was written wrong (became). I fixed it.Simultaniously , one of the hosts name (workers) was copied wrong.
+I have disability to install containerd.io package because of gpg key issues.
 
