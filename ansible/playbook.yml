@@ -85,8 +85,8 @@
 
     - name: Installing containerd gpg keys
       ansible.builtin.get_url:
-        dest: /etc/apt/keyrings/docker.asc
         url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
         mode: '0644'
 
     - name: Adding to the System Docker APT repo
@@ -102,8 +102,8 @@
 
     - name: Installing Kubernetes gpg keys
       ansible.builtin.get_url:
-        dest: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
         url: https://pkgs.k8s.io/core:/stable:/v1.37/deb/Release.key
+        dest: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
         mode: '0644'
 
     - name: Adding to the System Kubernetes APT repo
