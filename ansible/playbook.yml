@@ -114,31 +114,8 @@
         suites: /
         signed_by: /etc/apt/keyrings/kubernetes-apt-keyring.asc
         state: present
-      # Task 2.2 Containerd and cgroup configuration and installing
-    - name: Install containerd.io package
-      ansible.builtin.apt:
-        name: containerd.io
-        state: present
-        update_cache: true
 
-    - name: Creating containerd folder under /etc
-      ansible.builtin.file:
-        path: /etc/containerd
-        mode: '0755'
-        state: directory
-
-    - name: Producting containerd configuration and activating SystemdCgroup setting
-      ansible.builtin.shell: |
-        containerd config defeult | sed 's/SystemdCgroup = false/SystemdCgroup = true/g' > /etc/containerd/config.toml
-      notify: Restart containerd
-
-    - name: Initialization containerd and doing enable
-      ansible.builtin.systemd_service:
-        name: containerd
-        state: started
-        enabled: true
-
-      # Task 2.3 Kubernetes tools setup (kubelet,kubeadm,kubectl)
+# Task 2.3 Kubernetes tools setup (kubelet,kubeadm,kubectl)
     - name: Install Kubernetes package
       ansible.builtin.apt:
         name:
@@ -160,6 +137,30 @@
     - name: Start and enable kubelet service
       ansible.builtin.systemd_service:
         name: kubelet
+        state: started
+        enabled: true
+
+      # Task 2.2 Containerd and cgroup configuration and installing
+    - name: Install containerd.io package
+      ansible.builtin.apt:
+        name: containerd.io
+        state: present
+        update_cache: true
+
+    - name: Creating containerd folder under /etc
+      ansible.builtin.file:
+        path: /etc/containerd
+        mode: '0755'
+        state: directory
+
+    - name: Producting containerd configuration and activating SystemdCgroup setting
+      ansible.builtin.shell: |
+        containerd config defeult | sed 's/SystemdCgroup = false/SystemdCgroup = true/g' > /etc/containerd/config.toml
+      notify: Restart containerd
+
+    - name: Initialization containerd and doing enable
+      ansible.builtin.systemd_service:
+        name: containerd
         state: started
         enabled: true
 
