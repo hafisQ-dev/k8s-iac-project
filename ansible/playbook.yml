@@ -214,12 +214,26 @@
         remote_src: true
         mode: '0600'
 
-    # Task 4. CNI Network Add-on (Flannel default pod CIDR 10.244.0.0/16 ile tam uyumludur)
-    - name: Deploy Flannel CNI network
+    # Task 4. CNI Network Add-on
+    - name: Calico custom resource definition and tigera operator install
       ansible.builtin.command: >
-        kubectl apply --kubeconfig=/etc/kubernetes/admin.conf -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+        kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/tigera-operator.yaml
+      environment: KUBECONFIG: /root/.kube/config
+      register: operator_results
+      failed_when:
+        - operator_results.rc != 0
+        - "'already exists' not in operator_results.stderr"
+      changed_when: "'created' in operator_results.stdout or 'configures' in operator _results.stdout"
+
+    - name: Calico Custom Resource (Network Structure)
+      ansible.builtin.command: >
+        kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/custom-resources.yaml
+      environment: /root/.kube/config
       register: cni_results
-      changed_when: "'created' in cni_results.stdout or 'configured' in cni_results.stdout"
+      failed_when:
+        - cni_results.rc != 0
+        - "'already exists' not in cni_results.stderr"
+      changed_when: "'created' in cni_results.stdout or 'configures' in cni_results.stdout"
 
     # Task 5 Creating Join Command on Master node
     - name: Making a command named join_command
