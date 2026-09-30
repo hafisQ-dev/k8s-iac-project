@@ -3,9 +3,15 @@
   hosts: k8s_cluster
   become: true
   handlers:
+
     - name: Restart containerd
       ansible.builtin.systemd_service:
         name: containerd
+        state: restarted
+
+    - name: Restart kubelet
+      ansible.builtin.systemd:
+        name: kubelet
         state: restarted
 
   tasks:
@@ -163,7 +169,9 @@
 
     - name: Producing containerd configuration and activating SystemdCgroup setting
       ansible.builtin.shell: |
-        containerd config default | sed 's/SystemdCgroup = false/SystemdCgroup = true/g' > /etc/containerd/config.toml
+        containerd config default | \ 
+        sed 's/SystemdCgroup = false/SystemdCgroup = true/g' | \
+        sed 's|registry.k8s.io/pause:3.[0-9]|registry.k8s.io/pause:3.10|g' > /etc/containerd/config.toml
       notify: Restart containerd
 
     - name: Initialization containerd and doing enable
@@ -171,6 +179,12 @@
         name: containerd
         state: started
         enabled: true
+    - name: Allow kubelet to run with swap enabled
+      ansible.builtin.lineinfile:
+        path: /etc/default/kubelet
+        line: 'KUBELET_EXTRA_ARGS="--fail-swap-on=false"'
+        create: yes
+      notify: Restart kubelet
 
 - name: Initialization of Control Plane
   hosts: master
