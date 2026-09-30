@@ -1,5 +1,5 @@
 ---
-- name: Kubernetes Preparatory Stage for AWS Free Tier
+- name: Kebernetes Preparatory Stage for AWS Free Tier
   hosts: k8s_cluster
   become: true
   handlers:
@@ -9,9 +9,10 @@
         state: restarted
 
   tasks:
-    # --- Stage 1 --- Kubernetes System Preparation
-    # Task 1.1: Swap file for AWS free tier
-    - name: Swap-on file creating for kubernetes
+
+      # --- Stage 1 --- Kubernetses System Preparetion
+      # Task 1.1: Swap file for AWS free tier
+    - name: Swap-on file creating for kubernetese
       ansible.builtin.command: fallocate -l 2G /swapfile
       args:
         creates: /swapfile
@@ -21,7 +22,7 @@
         path: /swapfile
         mode: '0600'
 
-    - name: Returning file to swap form
+    - name: returning file  to swap form
       ansible.builtin.command: mkswap /swapfile
       register: mkswap_result
       changed_when: mkswap_result.rc == 0
@@ -33,7 +34,7 @@
       changed_when: swapon_result.rc == 0
       failed_when: false
 
-    - name: Altering swap file permanently to /etc/fstab
+    - name: Altering swap file permanently to /etcd/fstab
       ansible.posix.mount:
         path: none
         src: /swapfile
@@ -41,8 +42,8 @@
         opts: sw
         state: present
 
-    # Task 1.2 Kubernetes Kernel Modules
-    - name: Creating config file for overlay and br_netfilter
+      # Task 1.2 Kubernetes Kernel Modules
+    - name: creating config file for overlay and br_netfilter
       ansible.builtin.copy:
         dest: /etc/modules-load.d/k8s.conf
         content: |
@@ -57,7 +58,7 @@
         - br_netfilter
       changed_when: false
 
-    # Task 1.3 IP forwarding by sysctl
+      # Task 1.3 IP forwarding by stsctl
     - name: Kubernetes sysctl config docs creating
       ansible.builtin.copy:
         dest: /etc/sysctl.d/k8s.conf
@@ -67,23 +68,20 @@
           net.ipv4.ip_forward                 = 1
         mode: '0644'
 
-    - name: Configure kernel parameters at runtime
+    - name: configure kernel parameters at runtime
       ansible.builtin.command: sysctl --system
       changed_when: false
-
-    # Stage 2 : Container Runtime (CRI) & Essential Packages
-    - name: Installing essential packages
+      # Stage 2 : Container Runtime (CRI) & Essential packet for System Ecosystem
+      # Task 2.1 getting apt packets
+    - name: installing essential packets
       ansible.builtin.apt:
-        update_cache: false
-        #force_apt_get: true
+        update_cache: true
+        force_apt_get: true
         name:
           - apt-transport-https
           - ca-certificates
           - curl
           - gpg
-          - conntrack ## Kubernetes kube-proxy/kubelet önkoşulu
-          - ipset # IPVS modunda çalışan kube-proxy için önerilir
-        state: present
 
     - name: Creating Keyring folder
       ansible.builtin.file:
@@ -110,20 +108,44 @@
 
     - name: Installing Kubernetes gpg keys
       ansible.builtin.get_url:
-        url: https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key
-        dest: /etc/apt/keyrings/kubernetes-apt-keyring.asc
+        url: https://pkgs.k8s.io/core:/stable:/v1.37/deb/Release.key
+        dest: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
         mode: '0644'
 
     - name: Adding to the System Kubernetes APT repo
       ansible.builtin.deb822_repository:
         name: kubernetes
         types: deb
-        uris: https://pkgs.k8s.io/core:/stable:/v1.31/deb/
+        uris: https://pkgs.k8s.io/core:/stable:/v1.37/deb/
         suites: /
-        signed_by: /etc/apt/keyrings/kubernetes-apt-keyring.asc
+        signed_by: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
         state: present
 
-    # Task 2.3 Kubernetes tools setup
+      # Task 2.2 Containerd and cgroup configuration and installing
+    - name: Install containerd.io package
+      ansible.builtin.apt:
+        name: containerd.io
+        state: present
+        update_cache: true
+
+    - name: Creating containerd folder under /etc
+      ansible.builtin.file:
+        path: /etc/containerd
+        mode: '0755'
+        state: directory
+
+    - name: Producting containerd configuration and activating SystemdCgroup setting
+      ansible.builtin.shell: |
+        containerd config default | sed 's/SystemdCgroup = false/SystemdCgroup = true/g' > /etc/containerd/config.toml
+      notify: Restart containerd
+
+    - name: Initialization containerd and doing enable
+      ansible.builtin.systemd_service:
+        name: containerd
+        state: started
+        enabled: true
+
+    # Task 2.3 Kubernetes tools setup (kubelet,kubeadm,kubectl)
     - name: Install Kubernetes package
       ansible.builtin.apt:
         name:
@@ -148,80 +170,71 @@
         state: started
         enabled: true
 
-    # Task 2.2 Containerd and cgroup configuration
-    - name: Install containerd.io package
-      ansible.builtin.apt:
-        name: containerd.io
-        state: present
-        update_cache: true
-
-    - name: Creating containerd folder under /etc
-      ansible.builtin.file:
-        path: /etc/containerd
-        mode: '0755'
-        state: directory
-
-    - name: Producing containerd configuration and activating SystemdCgroup setting
-      ansible.builtin.shell: |
-        containerd config default | sed 's/SystemdCgroup = false/SystemdCgroup = true/g' > /etc/containerd/config.toml
-      notify: Restart containerd
-
-    - name: Initialization containerd and doing enable
-      ansible.builtin.systemd_service:
-        name: containerd
-        state: started
-        enabled: true
-
 - name: Initialization of Control Plane
   hosts: master
   become: true
   tasks:
-    # Task 3 Initialization control plane (master) node
+     # Task 3 Initialization control plane (master) node
     - name: kubeadm init
       ansible.builtin.shell: |
         kubeadm init \
           --pod-network-cidr=10.244.0.0/16 \
-          --cri-socket=unix:///var/run/containerd/containerd.sock \
-          --ignore-preflight-errors=Swap,Mem
+          --cri-socket = unix:///var/run/containerd/containerd.sock
       args:
         creates: /etc/kubernetes/admin.conf
       register: kube_init_outputs
 
-    - name: Creating .kube folder
+    - name: creating .kube folder
       ansible.builtin.file:
         path: /root/.kube
         mode: '0700'
         state: directory
 
-    - name: Copy admin.conf file to /root/.kube/config
+    - name: copy admin.conf file from /etc/kubernetes/admin.conf to /root/.kube/config
       ansible.builtin.copy:
         src: /etc/kubernetes/admin.conf
         dest: /root/.kube/config
         remote_src: true
         mode: '0600'
-
-    # Task 4. CNI Network Add-on (Flannel default pod CIDR 10.244.0.0/16 ile tam uyumludur)
-    - name: Deploy Flannel CNI network
+    # Task 4. CNI Network Add-on
+    - name: Calico custom resource definition and tigera operator install
       ansible.builtin.command: >
-        kubectl apply --kubeconfig=/etc/kubernetes/admin.conf -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+        kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/tigera-operator.yaml
+      environment: KUBECONFIG: /root/.kube/config
+      register: operator_results
+      failed_when:
+        - operator_results.rc != 0
+        - "'already exists' not in operator_results.stderr"
+      changed_when: "'created' in operator_results.stdout or 'configures' in operator _results.stdout"
+
+    - name: Calico Custom Resource (Network Structure)
+      ansible.builtin.command: >
+        kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/custom-resources.yaml
+      environment: /root/.kube/config
       register: cni_results
-      changed_when: "'created' in cni_results.stdout or 'configured' in cni_results.stdout"
+      failed_when:
+        - cni_results != 0
+        - "'already exists' not in cni_results.stderr"
+      changed_when: "'created' in cni_results.stdout or 'configures' in cni_results.stdout"
 
     # Task 5 Creating Join Command on Master node
-    - name: Making a command named join_command
+    - name: making a command named join_command
       ansible.builtin.command: kubeadm token create --print-join-command
       register: join_command_raw
       changed_when: false
 
-    - name: Register join command to ansible memory
+    - name: register join command to ansible memory
       ansible.builtin.set_fact:
-        join_command: "{{ join_command_raw.stdout }} --ignore-preflight-errors=Swap"
+        join_command: "{{ join_command_raw.stdout }}"
 
-- name: Worker node operations
+
+    # Task 6  Adding Linux worker node 
+- name: worker node operations
   hosts: workers
   become: true
   tasks:
-    - name: Add Worker node to The Cluster
+
+    - name: Making to add Worker node to The Cluster
       ansible.builtin.shell: "{{ hostvars[groups['master'][0]]['join_command'] }}"
       args:
         creates: /etc/kubernetes/kubelet.conf
@@ -229,13 +242,15 @@
 
     - name: Confirm worker node added to the cluster
       ansible.builtin.debug:
-        msg: "Worker nodes added to the Cluster successfully!"
+        msg: " Worker nodes added to the Cluster succesfully ! "
       when: worker_join_results is not skipped
 
-- name: Notice Status of joining Worker Nodes
+     # Task 7 Notice Status of joining Worker Nodes
+- name:  Notice Status of joining Worker Nodes
   hosts: master
   become: true
   tasks:
+
     - name: Make a List for status of Nodes
       ansible.builtin.command: kubectl --kubeconfig /etc/kubernetes/admin.conf get nodes
       register: nodes_status
