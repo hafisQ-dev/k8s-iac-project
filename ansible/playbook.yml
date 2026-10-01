@@ -235,7 +235,11 @@
       failed_when:
         - operator_results.rc != 0
         - "'already exists' not in operator_results.stderr"
+<<<<<<< Updated upstream
       changed_when: "'created' in operator_results.stdout or 'configured' in operator_results.stdout"
+=======
+      changed_when: "'created' in operator_results.stdout or 'configures' in operator_results.stdout"
+>>>>>>> Stashed changes
 
     # Task 4.2: Custom Resources Install
     - name: Calico Custom Resource (Network Structure)
