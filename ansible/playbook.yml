@@ -237,6 +237,11 @@
         - "'already exists' not in operator_results.stderr"
       changed_when: "'created' in operator_results.stdout or 'configured' in operator_results.stdout"
 
+# 2. CRD'lerin API'ye kaydolması için kısa bir bekleme
+    - name: Wait for Calico CRDs to be established
+      ansible.builtin.pause:
+        seconds: 10
+
     # Task 4.2: Custom Resources Install
     - name: Calico Custom Resource (Network Structure)
       ansible.builtin.command: >
