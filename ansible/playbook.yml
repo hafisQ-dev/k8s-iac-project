@@ -169,9 +169,9 @@
 
     - name: Producing containerd configuration and activating SystemdCgroup setting
       ansible.builtin.shell: |
-        containerd config default | \ 
+        containerd config default | \
         sed 's/SystemdCgroup = false/SystemdCgroup = true/g' | \
-        sed 's|registry.k8s.io/pause:3.[0-9]|registry.k8s.io/pause:3.10|g' > /etc/containerd/config.toml
+        sed -E 's|registry.k8s.io/pause:3\.[0-9\.]+|registry.k8s.io/pause:3.10|g' > /etc/containerd/config.toml
       notify: Restart containerd
 
     - name: Initialization containerd and doing enable
