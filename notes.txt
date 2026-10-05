@@ -147,11 +147,72 @@ kubectl --kubeconfig ./admin.conf get nodes
 *Get Node Status we use following CLI (kubectl get nodes ****) to get status of nodes to register nodes_status and make nodes_status.stdout_lines to see status of nodes (dpkg module >  var parameter) 
 -----------------------------------------------------
 for ip in 63.177.79.130 3.121.29.26 3.126.84.179; do ssh ubuntu@$ip "sudo rm -f /var/lib/dpkg/lock* /var/lib/apt/lists/lock; sudo apt-get clean"; done
-
+sudo systemctl status kubelet  >> kubelet status control (active or unactive)
+sudo journalctl -xeu kubelet --no-pager -n 30 >> notice kubelet logs (generally outputs cgroup driver mismatch, swap is enabled veya failed to run Kubelet
+sudo crictl ps -a | grep apiserver >> control plane containers contlollling
+sudo ss -tulpn | grep 6443
 -----------------------------------------------------
 ------Troubleshooting------
 I got syntax warning as one of the task keywords (become) was written wrong (became). I fixed it.Simultaniously , one of the hosts name (workers) was copied wrong.
 I have disability to install containerd.io package because of gpg key issues.
 I have experienced troubleshooting on the section of installing essencial packets
-
+---
+connection refused>> 1.environment syntax error: (X) environment: /root/.kube/config >> (O)environment: KUBECONFİG:/root/.kube/config
+connection refused>> 2.failed_when : (X) cni_results != 0 >> (O) cni_results.rc != 0
+connection refused>> API Server unready condition >> we added wait_for task before this 
+---
+no matches for kind "Installation" in version "operator.tigera.io/v1"
+ensure CRDs are installed first >> # 2. CRD'lerin API'ye kaydolması için kısa bir bekleme
+- name: Wait for Calico CRDs to be established
+  ansible.builtin.pause:
+    seconds: 10
+---
+[ERROR Port-6443]: Port 6443 is in use>>
+-----------------------------------------------------
 **CHANGED**
+Adım 1: Master Node Üzerinde Sorunu Teşhis Etme
+Sorunun kaynağını görmek için k8s-master düğümünde şu komutları çalıştırın:
+
+Bash
+# 1. kubelet servis durumunu kontrol edin
+sudo systemctl status kubelet
+
+# 2. kubelet loglarını inceleyin
+sudo journalctl -xeu kubelet --no-pager -n 50
+
+# 3. Çalışan veya çöken konteynerleri görün
+sudo crictl --runtime-endpoint unix:///var/run/containerd/containerd.sock ps -a
+-----------------------------------------------------
+Adım 3: Yeniden Başlatma (kubeadm reset)
+Mevcut bozuk cluster durumunu temizleyip sıfırdan başlatmak için k8s-master üzerinde temizlik yapın:
+
+Bash
+sudo kubeadm reset -f
+sudo rm -rf /etc/kubernetes/ /var/lib/etcd /var/lib/kubelet /root/.kube
+-----------------------------------------------------
+Sunucuyu / Kümeyi Temizleme (Cluster Reset)
+Ana sunucunda (Control Plane node) şu komutları sırasıyla çalıştırarak Kubernetes, containerd ve ağ bileşenlerinin kalıntılarını tamamen temizle:
+
+Bash
+# 1. Kubeadm ile Kubernetes bileşenlerini durdurup sıfırlayın
+sudo kubeadm reset -f
+
+# 2. CNI ağ eklentisi (Calico/Flannel/Cilium) ve IPVS kalıntılarını temizleyin
+sudo rm -rf /etc/cni/net.d
+sudo ip link delete cni0 2>/dev/null || true
+sudo ip link delete flannel.1 2>/dev/null || true
+
+# 3. Kubeconfig ve Kubernetes durum dosyalarını silin
+sudo rm -rf $HOME/.kube
+sudo rm -rf /etc/kubernetes/
+sudo rm -rf /var/lib/etcd
+sudo rm -rf /var/lib/kubelet/*
+
+# 4. Containerd yapılandırmasını silin (Ansible baştan üretecek)
+sudo rm -f /etc/containerd/config.toml
+
+# 5. Servisleri durdurup temiz halde yeniden başlatın
+sudo systemctl stop kubelet containerd
+sudo systemctl restart containerd
+(Eğer worker node'ların varsa, aynı kubeadm reset -f ve klasör temizleme adımlarını onların üzerinde de çalıştırabilirsin).
+--------------------------------------------------
