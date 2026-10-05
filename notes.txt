@@ -167,7 +167,23 @@ ensure CRDs are installed first >> # 2. CRD'lerin API'ye kaydolması için kısa
   ansible.builtin.pause:
     seconds: 10
 ---
-[ERROR Port-6443]: Port 6443 is in use>>
+[ERROR Port-6443]: Port 6443 is in use>> Portu Tutan Süreci Bulun ve Temizleyin
+Master node üzerinde şu komutla 6443 portunu neyin tuttuğunu görün:
+
+Bash
+sudo ss -tulpn | grep 6443
+Eğer arka planda çalışan bir kube-apiserver veya kubelet varsa, temiz bir reset atın:
+
+Bash
+sudo kubeadm reset -f
+sudo systemctl stop kubelet
+sudo systemctl stop containerd
+sudo rm -rf /etc/kubernetes/
+sudo rm -rf /var/lib/etcd
+sudo systemctl start containerd
+sudo systemctl start kubelet
+---
+
 -----------------------------------------------------
 **CHANGED**
 Adım 1: Master Node Üzerinde Sorunu Teşhis Etme
